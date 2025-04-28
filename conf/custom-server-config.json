@@ -1,0 +1,13 @@
+{
+    "server": {
+        "custom_registration_endpoint": "http://your-server-address/register",
+        "api_port": 8124,
+        "alternative_api_port": 8127,
+        "allow_external_ip": true
+    },
+    "authentication": {
+        "token_endpoint": "http://your-server-address/token",
+        "client_id": "",
+        "client_secret": ""
+    }
+} 

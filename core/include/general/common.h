@@ -33,6 +33,8 @@
 #include <iomanip>
 #include <sys/types.h>
 
+#include "services_sdk/interfaces/messaging/messaging_enums.h" // Include for HTTPStatusCode
+
 namespace std
 {
 
@@ -171,6 +173,15 @@ operator<<(ostream &os, const map<PrintableKey, PrintableValue> &)
 }
 
 } // namespace std
+
+// Adding the stream operator for HTTPStatusCode (outside std namespace)
+inline std::ostream &
+operator<<(std::ostream &os, const HTTPStatusCode &status)
+{
+    // Cast to underlying type for printing
+    using UnderlyingType = std::underlying_type_t<HTTPStatusCode>;
+    return os << static_cast<UnderlyingType>(status);
+}
 
 #endif // __COMMON_H__
 

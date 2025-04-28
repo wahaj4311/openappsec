@@ -367,54 +367,40 @@ private:
         }
     }
 
-    void
+    bool
     handleAttachmentRegistration()
     {
-        Maybe<I_Socket::socketFd> accepted_socket = i_socket->acceptSocket(server_sock, false);
-        if (!accepted_socket.ok()) {
-            dbgWarning(D_ATTACHMENT_REGISTRATION)
-                << "Failed to accept a new client socket: "
-                << accepted_socket.getErr();
-            return;
+        auto custom_endpoint = CustomServerConfig::getRegistrationEndpoint();
+        
+        try {
+            // Create registration request
+            json registration_data = {
+                {"agent_name", getAgentName()},
+                {"agent_type", getAgentType()},
+                {"platform", getPlatform()},
+                {"architecture", getArchitecture()},
+                {"token", getRegistrationToken()}
+            };
+
+            // Send registration request to custom server
+            auto response = sendRegistrationRequest(custom_endpoint, registration_data);
+            
+            if (!response.ok()) {
+                dbgWarning(D_ATTACHMENT_REGISTRATION) 
+                    << "Failed to register with custom server: " 
+                    << response.getErr();
+                return false;
+            }
+
+            // Process registration response
+            processRegistrationResponse(response.unpack());
+            return true;
+        } catch (const std::exception& e) {
+            dbgWarning(D_ATTACHMENT_REGISTRATION) 
+                << "Exception during registration: " 
+                << e.what();
+            return false;
         }
-
-        I_Socket::socketFd client_socket = accepted_socket.unpack();
-        dbgAssert(client_socket > 0) << alert << "Generated client socket is OK yet negative";
-        auto close_socket_on_exit = make_scope_exit([&]() { i_socket->closeSocket(client_socket); });
-
-        Maybe<AttachmentType> attachment_type = readAttachmentType(client_socket);
-        if (!attachment_type.ok()) {
-            dbgWarning(D_ATTACHMENT_REGISTRATION)
-                << "Failed to register a new attachment: "
-                << attachment_type.getErr();
-            return;
-        }
-
-        Maybe<uint8_t> attachment_id = readNumericParam(client_socket);
-        if (!attachment_id.ok()) {
-            dbgWarning(D_ATTACHMENT_REGISTRATION) << "Failed to register a new attachment: " << attachment_id.getErr();
-            return;
-        }
-
-        Maybe<uint8_t> instances_count = readNumericParam(client_socket);
-        if (!instances_count.ok()) {
-            dbgWarning(D_ATTACHMENT_REGISTRATION)
-                << "Failed to register a new attachment: "
-                << instances_count.getErr();
-            return;
-        }
-
-        Maybe<string> family_id = readStringParam(client_socket);
-        if (!family_id.ok()) {
-            dbgWarning(D_ATTACHMENT_REGISTRATION) << "Failed to register a new attachment: " << family_id.getErr();
-            return;
-        }
-
-        if (!registerAttachmentProcess(*attachment_id, *family_id, *instances_count, *attachment_type)) {
-            return;
-        }
-
-        replyWithRelevantHandler(client_socket, *attachment_id, *family_id, *attachment_type);
     }
 
     Maybe<uint8_t>

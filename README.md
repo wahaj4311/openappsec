@@ -61,7 +61,7 @@ $ wget https://downloads.openappsec.io/open-appsec-k8s-install && chmod +x open-
 $ ./open-appsec-k8s-install
 ```
 
-For Kubernetes (NGINX or Kong) using Helm: follow [documentation](https://docs.openappsec.io/getting-started/start-with-kubernetes/install-using-helm-ingress-nginx-and-kong) – use this method if you’ve built your own containers. 
+For Kubernetes (NGINX or Kong) using Helm: follow [documentation](https://docs.openappsec.io/getting-started/start-with-kubernetes/install-using-helm-ingress-nginx-and-kong) – use this method if you've built your own containers. 
 
 For Linux (NGINX or Kong) using the installer (list of supported/pre-compiled NGINX attachments is available [here](https://downloads.openappsec.io/packages/supported-nginx.txt)):
 
@@ -70,7 +70,7 @@ $ wget https://downloads.openappsec.io/open-appsec-install && chmod +x open-apps
 $ ./open-appsec-install --auto
 ```
 
-For Linux, if you’ve built your own package use the following commands:
+For Linux, if you've built your own package use the following commands:
 
 ```bash
 $ install-cp-nano-agent.sh --install --hybrid_mode
@@ -186,3 +186,82 @@ open-appsec is open source and available under Apache 2.0 license.
 The basic ML model is open source and available under Apache 2.0 license.
 
 The advanced ML model is open source and available under Machine Learning Model license, available upon download in the tar file.
+
+# OpenAppSec Registration Module
+
+## Prerequisites
+
+- ANSI C compiler
+- YAJL 2.x (Yet Another JSON Library)
+- CMake (for build system)
+
+## Building the Project
+
+1. First, ensure you have YAJL installed:
+
+```bash
+# On Debian/Ubuntu
+sudo apt-get install libyajl-dev
+
+# On RHEL/CentOS
+sudo yum install yajl-devel
+
+# On Arch Linux
+sudo pacman -S yajl
+```
+
+2. Build the project:
+
+```bash
+# Create build directory
+mkdir build
+cd build
+
+# Configure with CMake
+cmake ..
+
+# Build
+make
+```
+
+## Configuration
+
+After building, configure your custom server settings in `conf/custom-server-config.json`:
+
+```json
+{
+    "server": {
+        "custom_registration_endpoint": "http://your-server-address/register",
+        "api_port": 8124,
+        "alternative_api_port": 8127,
+        "allow_external_ip": true
+    },
+    "authentication": {
+        "token_endpoint": "http://your-server-address/token",
+        "client_id": "",
+        "client_secret": ""
+    }
+}
+```
+
+## Features
+
+- Data representation independent JSON parsing
+- Stream parsing support for efficient memory usage
+- Fast and minimal memory footprint
+- Robust error handling with detailed error messages
+- Support for custom server integration
+
+## Dependencies
+
+The project relies on:
+- YAJL 2.x for JSON parsing
+- nlohmann/json for modern C++ JSON handling
+- Standard C++ libraries
+
+## System Requirements
+
+- ANSI C compiler
+- POSIX-compliant system
+- Minimum memory: Based on your usage
+- Disk space: Minimal (~10MB for build)

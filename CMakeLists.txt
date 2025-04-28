@@ -1,44 +1,53 @@
-cmake_minimum_required (VERSION 2.8.4)
-project (ngen)
+cmake_minimum_required(VERSION 3.10)
+project(OpenAppSec VERSION 1.0)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fPIC -Wall -Wno-terminate")
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-execute_process(COMMAND grep -c "Alpine Linux" /etc/os-release OUTPUT_VARIABLE IS_ALPINE)
-if(NOT IS_ALPINE EQUAL "0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dalpine")
-endif()
+# Find required packages
+find_package(YAJL REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
 
-find_package(Boost REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(GTest REQUIRED)
-
-include(cppcheck.cmake)
-
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${OPENSSL_ROOT_DIR}/lib)
-include_directories(${ZLIB_INCLUDE_DIR})
-link_directories(${ZLIB_LIBRARY})
-include_directories(/usr/include/libxml2)
-include_directories(/usr/src/googletest/googlemock/include)
-
-include(unit_test.cmake)
-
-include_directories(external)
-include_directories(external/yajl/yajl-2.1.1/include)
-include_directories(external/C-Mock/include/cmock)
-include_directories(external/picojson)
-include_directories(core/include/general)
-include_directories(core/include/internal)
-include_directories(core/include/services_sdk/interfaces)
-include_directories(core/include/services_sdk/resources)
-include_directories(core/include/services_sdk/utilities)
-include_directories(core/include/attachments)
-include_directories(events/include)
-include_directories(components/include)
-
-add_subdirectory(build_system)
-add_subdirectory(external)
-add_subdirectory(core)
-add_subdirectory(attachments)
+# Add source directories
 add_subdirectory(components)
 add_subdirectory(nodes)
+
+# Set include directories
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+    ${YAJL_INCLUDE_DIRS}
+)
+
+# Main registration manager executable
+add_executable(attachment-registration-manager
+    nodes/attachment_registration_manager/main.cc
+    components/attachment-intakers/attachment_registrator/attachment_registrator.cc
+)
+
+# Link libraries
+target_link_libraries(attachment-registration-manager
+    PRIVATE
+    ${YAJL_LIBRARIES}
+    nlohmann_json::nlohmann_json
+    pthread
+)
+
+# Install targets
+install(TARGETS attachment-registration-manager
+    RUNTIME DESTINATION bin
+)
+
+# Install configuration
+install(FILES conf/custom-server-config.json
+    DESTINATION conf
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)
+
+# Create directories needed for runtime
+install(DIRECTORY
+    DESTINATION /dev/shm/check-point
+    DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE 
+                         GROUP_READ GROUP_WRITE GROUP_EXECUTE
+                         WORLD_READ WORLD_WRITE WORLD_EXECUTE
+)
